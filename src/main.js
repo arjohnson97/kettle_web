@@ -1,188 +1,164 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import styles from './index.css';
-import * as firebase from 'firebase';
-import MuiThemeProvider from 'material-ui/styles';
+import React, { Component } from 'react'
+import * as firebase from 'firebase'
 
-import AppBar from 'material-ui/AppBar';
+import {
+  Input, Button, Modal, Form, Icon
+} from 'antd'
 
-import TextField from 'material-ui/TextField';
-import FloatingActionButton from 'material-ui/FloatingActionButton';
-import ContentAdd from 'material-ui/svg-icons/content/add';
-import Dialog from 'material-ui/Dialog';
-import FlatButton from 'material-ui/FlatButton';
+const Search = Input.Search
+const FormItem = Form.Item
 
 // Initialize Firebase
-var config = {
+const config = {
   apiKey: 'AIzaSyD71FqS5lCiGdJuE8UrfS4Ic_TgHsgikV4',
   authDomain: 'kettle-84ea2.firebaseapp.com',
   databaseURL: 'https://kettle-84ea2.firebaseio.com',
   projectId: 'kettle-84ea2',
   storageBucket: 'kettle-84ea2.appspot.com',
   messagingSenderId: '850017678808'
-};
-firebase.initializeApp(config);
+}
+firebase.initializeApp(config)
 
-export default class Kettle extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { value: '' };
+export default class Kettle extends Component {
+  constructor (props) {
+    super(props)
 
-    this.state = { currentKettle: '' };
-    this.state = { kettleTitle: '' };
-    this.state = { contentText: '' };
+    this.state = {
+      value: '',
+      currentKettle: '',
+      kettleTitle: '',
+      contentText: '',
+      showModal: false
+    }
 
-    this.handleChange = this.handleChange.bind(this);
-    this.updateContent = this.updateContent.bind(this);
-    this.onKeyPress = this.onKeyPress.bind(this);
+    this.handleChange = this.handleChange.bind(this)
+    this.updateContent = this.updateContent.bind(this)
+    this.onKeyPress = this.onKeyPress.bind(this)
   }
 
-  state = {
-    open: false
-  };
-
-  handleOpen = () => {
-    this.setState({ open: true });
-  };
-
-  handleClose = () => {
-    this.setState({ open: false });
-  };
-
-  onSubmit(event) {
-    event.preventDefault();
-    event.stopPropagation();
-  }
-
-  handleChange(event) {
-    this.setState({ currentKettle: event.target.value });
-  }
-
-  onKeyPress(event) {
-    if (event.which === 13) {
-      event.preventDefault();
-      this.handleSubmit(this.state.currentKettle);
+  componentDidMount () {
+    if (window.location.pathname.length > 1) {
+      const kettle = window.location.pathname.slice(1)
+      this.getKettle(kettle)
     }
   }
 
-  handleSubmit() {
-    this.setState({ kettleTitle: this.state.currentKettle });
-    var contentRef = firebase
-      .database()
-      .ref('kettles/' + this.state.currentKettle + '/content'); //this.state.kettleTitle = kettleId;
+  showModal () {
+    this.setState({ showModal: true })
+  }
 
-    var checkRef = firebase.database().ref('kettles/'); // Checks if the searched Kettle exists
-    checkRef.on('value', snapshot => {
-      if (!snapshot.hasChild(this.state.currentKettle)) {
-        alert("Kettle doesn't exist");
+  hideModal () {
+    this.setState({ showModal: false })
+  }
+
+  onSubmit (event) {
+    event.preventDefault()
+    event.stopPropagation()
+  }
+
+  handleChange (event) {
+    this.setState({ currentKettle: event.target.value })
+  }
+
+  onKeyPress (event) {
+    if (event.which === 13) {
+      event.preventDefault()
+      this.getKettle(this.state.currentKettle)
+    }
+  }
+
+  getKettle (kettle) {
+    this.setState({ kettleTitle: kettle })
+    const contentRef = firebase
+      .database()
+      .ref(`kettles/${kettle}/content`) // this.state.kettleTitle = kettleId;
+
+    const checkRef = firebase.database().ref('kettles/') // Checks if the searched Kettle exists
+    checkRef.on('value', (snapshot) => {
+      if (!snapshot.hasChild(kettle)) {
+        alert("Kettle doesn't exist")
       } else {
-        contentRef.on('value', snapshot => {
-          this.setState({ contentText: snapshot.val() });
-        });
+        contentRef.on('value', (snapshot) => {
+          this.setState({ contentText: snapshot.val() })
+        })
       }
-    });
+    })
   }
-  //test
-  updateContent(e) {
-    //this.setState({ contentText: e.target.value });
-    firebase.database().ref('kettles/' + this.state.currentKettle + '/').set({
+
+  updateContent (e) {
+    firebase.database().ref(`kettles/${this.state.currentKettle}/`).set({
       content: e.target.value
-    });
-    var contentRef = firebase
+    })
+    const contentRef = firebase
       .database()
-      .ref('kettles/' + this.state.currentKettle + '/content'); //this.state.kettleTitle = kettleId;
+      .ref(`kettles/${this.state.currentKettle}/content`) // this.state.kettleTitle = kettleId;
 
-    var checkRef = firebase.database().ref('kettles/'); // Checks if the searched Kettle exists
-    checkRef.on('value', snapshot => {
-      contentRef.on('value', snapshot => {
-        this.setState({ contentText: snapshot.val() });
-      });
-    });
+    const checkRef = firebase.database().ref('kettles/') // Checks if the searched Kettle exists
+    checkRef.on('value', (snapshot) => {
+      contentRef.on('value', (snapshot) => {
+        this.setState({ contentText: snapshot.val() })
+      })
+    })
   }
 
-  render() {
-    const actions = [
-      <FlatButton label="Cancel" primary={true} onClick={this.handleClose} />,
-      <FlatButton
-        label="Submit"
-        primary={true}
-        keyboardFocused={true}
-        onClick={this.handleClose}
-      />
-    ];
+  render () {
     return (
       <div>
-        <AppBar title={this.state.kettleTitle} showMenuIconButton={false}>
-          <form
-            onKeyPress={this.onKeyPress}
-            style={{
-              display: 'flex',
-              justifyContent: 'flex-start'
-            }}
-          >
-
-            <TextField
-              type="text"
-              hintText="Search for Kettle..."
-              hintStyle={{ color: 'white' }}
-              onChange={this.handleChange}
-            />
-
-          </form>
-        </AppBar>
-        <div
+        <div style={{ textAlign: 'center', fontSize: '24px', marginTop: '20px' }}>
+          <Icon type="coffee" />
+kettle
+          <small>
+({this.state.kettleTitle})
+          </small>
+        </div>
+        <Button
           style={{
-            display: 'flex',
-            justifyContent: 'center'
-          }}
-        />
-        <form
-          style={{
+            margin: '20px auto',
             display: 'flex'
           }}
+          onClick={() => this.showModal()}
         >
+           Add
+        </Button>
+        <form
+          onKeyPress={this.onKeyPress}
+          style={{ maxWidth: '900px', margin: '0px auto' }}
+        >
+          <FormItem>
+            <Search
+              type="text"
+              placeholder="Search for Kettle..."
+              size="large"
+              enterButton="Search"
+              onSearch={() => this.getKettle(this.state.currentKettle)}
+              onChange={this.handleChange}
+              style={{borderRadius: '20px !important'}}
+            />
+          </FormItem>
 
-          <textarea
-            value={this.state.contentText}
-            style={{
-              borderColor: 'white',
-              height: 500,
-              width: '100%'
-            }}
-            onChange={this.updateContent}
-          />
-
+          <FormItem>
+            <Input.TextArea
+              value={this.state.contentText}
+              onChange={e => this.updateContent(e)}
+            />
+          </FormItem>
         </form>
-        <FloatingActionButton
-          backgroundColor="green"
-          style={{
-            position: 'fixed',
-            bottom: 15,
-            right: 15
-          }}
-          onClick={() => this.handleOpen()}
-        >
+        <div />
 
-          <ContentAdd />
-
-        </FloatingActionButton>
-        <Dialog
+        <Modal
           title="New Kettle"
-          actions={actions}
-          modal={false}
-          open={this.state.open}
-          onRequestClose={this.handleClose}
+          visible={this.state.showModal}
+          onOk={e => this.onKeyPress(e)}
+          onCancel={() => this.hideModal()}
         >
-          <h4>
+          <div>
             Remember, anybody can access your Kettle if they have the name, so if you want to keep it secret, make the name unique.
-          </h4>
-          <TextField
-            placeholder={'Kettle Name...'}
-            style={{ textColor: 'black' }}
+          </div>
+          <Input
+            placeholder="Kettle Name..."
           />
-        </Dialog>
-
+        </Modal>
       </div>
-    );
+    )
   }
 }
