@@ -1,18 +1,21 @@
 import React, { Component } from 'react';
 import * as firebase from 'firebase';
 
-import { Input, Button, Modal } from 'antd'
+import {
+  Input, Button, Modal, Form, Icon,
+} from 'antd';
 
-const Search = Input.Search
+const Search = Input.Search;
+const FormItem = Form.Item;
 
 // Initialize Firebase
-var config = {
+const config = {
   apiKey: 'AIzaSyD71FqS5lCiGdJuE8UrfS4Ic_TgHsgikV4',
   authDomain: 'kettle-84ea2.firebaseapp.com',
   databaseURL: 'https://kettle-84ea2.firebaseio.com',
   projectId: 'kettle-84ea2',
   storageBucket: 'kettle-84ea2.appspot.com',
-  messagingSenderId: '850017678808'
+  messagingSenderId: '850017678808',
 };
 firebase.initializeApp(config);
 
@@ -25,28 +28,28 @@ export default class Kettle extends Component {
       currentKettle: '',
       kettleTitle: '',
       contentText: '',
-      showModal: false
-    }
+      showModal: false,
+    };
 
     this.handleChange = this.handleChange.bind(this);
     this.updateContent = this.updateContent.bind(this);
     this.onKeyPress = this.onKeyPress.bind(this);
   }
 
-  componentDidMount () {
-    if (window.location.pathname.length > 0) {
-      let kettle = window.location.pathname.slice(1)
-      this.getKettle(kettle)
+  componentDidMount() {
+    if (window.location.pathname.length > 1) {
+      const kettle = window.location.pathname.slice(1);
+      this.getKettle(kettle);
     }
   }
 
-  showModal = () => {
+  showModal() {
     this.setState({ showModal: true });
-  };
+  }
 
-  hideModal = () => {
+  hideModal() {
     this.setState({ showModal: false });
-  };
+  }
 
   onSubmit(event) {
     event.preventDefault();
@@ -64,18 +67,18 @@ export default class Kettle extends Component {
     }
   }
 
-  getKettle (kettle) {
+  getKettle(kettle) {
     this.setState({ kettleTitle: kettle });
-    var contentRef = firebase
+    const contentRef = firebase
       .database()
-      .ref('kettles/' + kettle + '/content'); //this.state.kettleTitle = kettleId;
+      .ref(`kettles/${kettle}/content`); // this.state.kettleTitle = kettleId;
 
-    var checkRef = firebase.database().ref('kettles/'); // Checks if the searched Kettle exists
-    checkRef.on('value', snapshot => {
+    const checkRef = firebase.database().ref('kettles/'); // Checks if the searched Kettle exists
+    checkRef.on('value', (snapshot) => {
       if (!snapshot.hasChild(kettle)) {
         alert("Kettle doesn't exist");
       } else {
-        contentRef.on('value', snapshot => {
+        contentRef.on('value', (snapshot) => {
           this.setState({ contentText: snapshot.val() });
         });
       }
@@ -83,16 +86,16 @@ export default class Kettle extends Component {
   }
 
   updateContent(e) {
-    firebase.database().ref('kettles/' + this.state.currentKettle + '/').set({
-      content: e.target.value
+    firebase.database().ref(`kettles/${ this.state.currentKettle }/`).set({
+      content: e.target.value,
     });
-    var contentRef = firebase
+    const contentRef = firebase
       .database()
-      .ref('kettles/' + this.state.currentKettle + '/content'); //this.state.kettleTitle = kettleId;
+      .ref(`kettles/${ this.state.currentKettle}/content`); // this.state.kettleTitle = kettleId;
 
-    var checkRef = firebase.database().ref('kettles/'); // Checks if the searched Kettle exists
-    checkRef.on('value', snapshot => {
-      contentRef.on('value', snapshot => {
+    const checkRef = firebase.database().ref('kettles/'); // Checks if the searched Kettle exists
+    checkRef.on('value', (snapshot) => {
+      contentRef.on('value', (snapshot) => {
         this.setState({ contentText: snapshot.val() });
       });
     });
@@ -101,63 +104,65 @@ export default class Kettle extends Component {
   render() {
     return (
       <div>
-        <h1>{this.state.kettleTitle}</h1>
-          <form
-            onKeyPress={this.onKeyPress}
-          >
+        <div style={{ textAlign: 'center', fontSize: '24px', marginTop: '20px' }}>
+          <Icon type="coffee" />
+          {' '}
+kettle
+          {' '}
 
-            <Search
-              type="text"
-              placeholder="Search for Kettle..."
-              size="large"
-              enterButton="Search"
-              onSearch={() => this.getKettle(this.state.currentKettle)}
-              onChange={this.handleChange}
-            />
-
-          </form>
-        <div
-        />
-        <form
-        >
-
-          <Input.TextArea
-            value={this.state.contentText}
-            onChange={(e) => this.updateContent(e)}
-          />
-
-        </form>
+          <small>
+(
+{this.state.kettleTitle}
+)
+</small>
+                </div>
         <Button
           style={{
-            position: 'fixed',
-            bottom: 15,
-            right: 15
+            margin: '20px auto',
+            display: 'flex',
           }}
           onClick={() => this.showModal()}
         >
-
-Add
-
+           Add
         </Button>
+        <form
+          onKeyPress={this.onKeyPress}
+          style={{ maxWidth: '900px', margin: '0px auto' }}
+        >
+          <FormItem>
+              <Search
+    type="text"
+    placeholder="Search for Kettle..."
+    size="large"
+    enterButton="Search"
+    onSearch={() => this.getKettle(this.state.currentKettle)}
+    onChange={this.handleChange}
+  />
+                        </FormItem>
 
-          <Modal
+
+          <FormItem>
+              <Input.TextArea
+                value={this.state.contentText}
+                onChange={e => this.updateContent(e)}
+              />
+            </FormItem>
+        </form>
+        <div />
+
+        <Modal
           title="New Kettle"
           visible={this.state.showModal}
-          onOk={(e) => this.onKeyPress(e)}
+          onOk={e => this.onKeyPress(e)}
           onCancel={() => this.hideModal()}
         >
           <div>
             Remember, anybody can access your Kettle if they have the name, so if you want to keep it secret, make the name unique.
-          </div>
+           </div>
           <Input
-            placeholder={'Kettle Name...'}
-          />
+             placeholder="Kettle Name..."
+           />
         </Modal>
-
-        
-
-        
-
       </div>
     );
   }
