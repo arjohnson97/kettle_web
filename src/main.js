@@ -1,16 +1,9 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import styles from './index.css';
+import React, { Component } from 'react';
 import * as firebase from 'firebase';
-import MuiThemeProvider from 'material-ui/styles';
 
-import AppBar from 'material-ui/AppBar';
+import { Input, Button, Modal } from 'antd'
 
-import TextField from 'material-ui/TextField';
-import FloatingActionButton from 'material-ui/FloatingActionButton';
-import ContentAdd from 'material-ui/svg-icons/content/add';
-import Dialog from 'material-ui/Dialog';
-import FlatButton from 'material-ui/FlatButton';
+const Search = Input.Search
 
 // Initialize Firebase
 var config = {
@@ -23,30 +16,36 @@ var config = {
 };
 firebase.initializeApp(config);
 
-export default class Kettle extends React.Component {
+export default class Kettle extends Component {
   constructor(props) {
     super(props);
-    this.state = { value: '' };
 
-    this.state = { currentKettle: '' };
-    this.state = { kettleTitle: '' };
-    this.state = { contentText: '' };
+    this.state = {
+      value: '',
+      currentKettle: '',
+      kettleTitle: '',
+      contentText: '',
+      showModal: false
+    }
 
     this.handleChange = this.handleChange.bind(this);
     this.updateContent = this.updateContent.bind(this);
     this.onKeyPress = this.onKeyPress.bind(this);
   }
 
-  state = {
-    open: false
+  componentDidMount () {
+    if (window.location.pathname.length > 0) {
+      let kettle = window.location.pathname.slice(1)
+      this.getKettle(kettle)
+    }
+  }
+
+  showModal = () => {
+    this.setState({ showModal: true });
   };
 
-  handleOpen = () => {
-    this.setState({ open: true });
-  };
-
-  handleClose = () => {
-    this.setState({ open: false });
+  hideModal = () => {
+    this.setState({ showModal: false });
   };
 
   onSubmit(event) {
@@ -61,19 +60,19 @@ export default class Kettle extends React.Component {
   onKeyPress(event) {
     if (event.which === 13) {
       event.preventDefault();
-      this.handleSubmit(this.state.currentKettle);
+      this.getKettle(this.state.currentKettle);
     }
   }
 
-  handleSubmit() {
-    this.setState({ kettleTitle: this.state.currentKettle });
+  getKettle (kettle) {
+    this.setState({ kettleTitle: kettle });
     var contentRef = firebase
       .database()
-      .ref('kettles/' + this.state.currentKettle + '/content'); //this.state.kettleTitle = kettleId;
+      .ref('kettles/' + kettle + '/content'); //this.state.kettleTitle = kettleId;
 
     var checkRef = firebase.database().ref('kettles/'); // Checks if the searched Kettle exists
     checkRef.on('value', snapshot => {
-      if (!snapshot.hasChild(this.state.currentKettle)) {
+      if (!snapshot.hasChild(kettle)) {
         alert("Kettle doesn't exist");
       } else {
         contentRef.on('value', snapshot => {
@@ -82,9 +81,8 @@ export default class Kettle extends React.Component {
       }
     });
   }
-  //test
+
   updateContent(e) {
-    //this.setState({ contentText: e.target.value });
     firebase.database().ref('kettles/' + this.state.currentKettle + '/').set({
       content: e.target.value
     });
@@ -101,86 +99,64 @@ export default class Kettle extends React.Component {
   }
 
   render() {
-    const actions = [
-      <FlatButton label="Cancel" primary={true} onClick={this.handleClose} />,
-      <FlatButton
-        label="Submit"
-        primary={true}
-        keyboardFocused={true}
-        onClick={this.handleClose}
-      />
-    ];
     return (
       <div>
-        <AppBar title={this.state.kettleTitle} showMenuIconButton={false}>
+        <h1>{this.state.kettleTitle}</h1>
           <form
             onKeyPress={this.onKeyPress}
-            style={{
-              display: 'flex',
-              justifyContent: 'flex-start'
-            }}
           >
 
-            <TextField
+            <Search
               type="text"
-              hintText="Search for Kettle..."
-              hintStyle={{ color: 'white' }}
+              placeholder="Search for Kettle..."
+              size="large"
+              enterButton="Search"
+              onSearch={() => this.getKettle(this.state.currentKettle)}
               onChange={this.handleChange}
             />
 
           </form>
-        </AppBar>
         <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center'
-          }}
         />
         <form
-          style={{
-            display: 'flex'
-          }}
         >
 
-          <textarea
+          <Input.TextArea
             value={this.state.contentText}
-            style={{
-              borderColor: 'white',
-              height: 500,
-              width: '100%'
-            }}
-            onChange={this.updateContent}
+            onChange={(e) => this.updateContent(e)}
           />
 
         </form>
-        <FloatingActionButton
-          backgroundColor="green"
+        <Button
           style={{
             position: 'fixed',
             bottom: 15,
             right: 15
           }}
-          onClick={() => this.handleOpen()}
+          onClick={() => this.showModal()}
         >
 
-          <ContentAdd />
+Add
 
-        </FloatingActionButton>
-        <Dialog
+        </Button>
+
+          <Modal
           title="New Kettle"
-          actions={actions}
-          modal={false}
-          open={this.state.open}
-          onRequestClose={this.handleClose}
+          visible={this.state.showModal}
+          onOk={(e) => this.onKeyPress(e)}
+          onCancel={() => this.hideModal()}
         >
-          <h4>
+          <div>
             Remember, anybody can access your Kettle if they have the name, so if you want to keep it secret, make the name unique.
-          </h4>
-          <TextField
+          </div>
+          <Input
             placeholder={'Kettle Name...'}
-            style={{ textColor: 'black' }}
           />
-        </Dialog>
+        </Modal>
+
+        
+
+        
 
       </div>
     );
