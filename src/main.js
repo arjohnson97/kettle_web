@@ -103,10 +103,10 @@ export default class Kettle extends Component {
 
   render () {
     return (
-      <div>
+      <div style={{padding: '0px 20px', userSelect: 'none'}}>
         <div style={{ textAlign: 'center', fontSize: '24px', marginTop: '20px' }}>
-          <Icon type="coffee" />
-kettle
+          <Icon type="coffee" /> {' '}
+kettle {' '}
           <small>
 ({this.state.kettleTitle})
           </small>
@@ -114,11 +114,13 @@ kettle
         <Button
           style={{
             margin: '20px auto',
-            display: 'flex'
+            display: 'flex',
+            border: 'none'
           }}
+          className="add-button"
           onClick={() => this.showModal()}
         >
-           Add
+          <Icon type="plus-circle" className="create-icon" />
         </Button>
         <form
           onKeyPress={this.onKeyPress}
@@ -129,10 +131,12 @@ kettle
               type="text"
               placeholder="Search for Kettle..."
               size="large"
-              enterButton="Search"
+              enterButton
               onSearch={() => this.getKettle(this.state.currentKettle)}
               onChange={this.handleChange}
               style={{borderRadius: '20px !important'}}
+              autoFocus
+              className="searchBar"
             />
           </FormItem>
 
