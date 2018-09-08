@@ -2,8 +2,10 @@ import React, { Component } from 'react'
 import * as firebase from 'firebase'
 
 import {
-  Input, Button, Modal, Form, Icon
+  Input, Button, Form, Icon
 } from 'antd'
+
+import CreateKettleModal from './components/CreateKettleModal'
 
 const Search = Input.Search
 const FormItem = Form.Item
@@ -26,12 +28,14 @@ export default class Kettle extends Component {
     this.state = {
       value: '',
       currentKettle: '',
-      kettleTitle: '',
       contentText: '',
-      showModal: false
+      showModal: false,
+      error: false
     }
 
     this.handleChange = this.handleChange.bind(this)
+    this.updateKettle = this.updateKettle.bind(this)
+    this.hideModal = this.hideModal.bind(this)
     this.updateContent = this.updateContent.bind(this)
     this.onKeyPress = this.onKeyPress.bind(this)
   }
@@ -51,11 +55,6 @@ export default class Kettle extends Component {
     this.setState({ showModal: false })
   }
 
-  onSubmit (event) {
-    event.preventDefault()
-    event.stopPropagation()
-  }
-
   handleChange (event) {
     this.setState({ currentKettle: event.target.value })
   }
@@ -68,7 +67,6 @@ export default class Kettle extends Component {
   }
 
   getKettle (kettle) {
-    this.setState({ kettleTitle: kettle })
     const contentRef = firebase
       .database()
       .ref(`kettles/${kettle}/content`) // this.state.kettleTitle = kettleId;
@@ -76,10 +74,10 @@ export default class Kettle extends Component {
     const checkRef = firebase.database().ref('kettles/') // Checks if the searched Kettle exists
     checkRef.on('value', (snapshot) => {
       if (!snapshot.hasChild(kettle)) {
-        alert("Kettle doesn't exist")
+        this.setState({ currentKettle: '', error: true })
       } else {
         contentRef.on('value', (snapshot) => {
-          this.setState({ contentText: snapshot.val() })
+          this.setState({ contentText: snapshot.val(), error: false })
         })
       }
     })
@@ -101,15 +99,16 @@ export default class Kettle extends Component {
     })
   }
 
+  updateKettle (newKettleName) {
+    this.setState({ currentKettle: newKettleName })
+    this.getKettle(newKettleName)
+  }
+
   render () {
     return (
       <div style={{padding: '0px 20px', userSelect: 'none'}}>
         <div style={{ textAlign: 'center', fontSize: '24px', marginTop: '20px' }}>
-          <Icon type="coffee" /> {' '}
-kettle {' '}
-          <small>
-({this.state.kettleTitle})
-          </small>
+          <Icon type="coffee" /> {' '} kettle {' '}<small>({this.state.currentKettle})</small>
         </div>
         <Button
           style={{
@@ -139,7 +138,7 @@ kettle {' '}
               className="searchBar"
             />
           </FormItem>
-
+          {this.state.error && <span style={{color: 'red'}}>Kettle does not exist.</span>}
           <FormItem>
             <Input.TextArea
               value={this.state.contentText}
@@ -149,19 +148,7 @@ kettle {' '}
         </form>
         <div />
 
-        <Modal
-          title="New Kettle"
-          visible={this.state.showModal}
-          onOk={e => this.onKeyPress(e)}
-          onCancel={() => this.hideModal()}
-        >
-          <div>
-            Remember, anybody can access your Kettle if they have the name, so if you want to keep it secret, make the name unique.
-          </div>
-          <Input
-            placeholder="Kettle Name..."
-          />
-        </Modal>
+        <CreateKettleModal visible={this.state.showModal} cancel={this.hideModal} updateKettle={this.updateKettle} />
       </div>
     )
   }
