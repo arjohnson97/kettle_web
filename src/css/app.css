@@ -1,0 +1,20 @@
+.create-icon {
+    font-size: 24px;
+    color: blue;
+    transition: all .3s !important;
+}
+
+
+
+.add-button:hover .create-icon {
+    transform: scale(1.2);
+}
+
+.searchBar input {
+    border-radius: 30px;
+}
+
+.searchBar button {
+    border-top-right-radius: 30px;
+    border-bottom-right-radius: 30px;
+}
