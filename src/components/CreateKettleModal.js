@@ -33,6 +33,8 @@ export default class CreateKettleModal extends Component {
         this.createKettle()
         this.props.updateKettle(this.state.newName)
         this.props.cancel()
+      } else {
+        this.props.cancel()
       }
     })
   }

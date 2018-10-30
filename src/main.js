@@ -30,6 +30,7 @@ export default class Kettle extends Component {
       currentKettle: '',
       contentText: '',
       showModal: false,
+      searchedKettle: '',
       error: false
     }
 
@@ -56,13 +57,13 @@ export default class Kettle extends Component {
   }
 
   handleChange (event) {
-    this.setState({ currentKettle: event.target.value })
+    this.setState({ searchedKettle: event.target.value })
   }
 
   onKeyPress (event) {
     if (event.which === 13) {
       event.preventDefault()
-      this.getKettle(this.state.currentKettle)
+      this.getKettle(this.state.searchedKettle)
     }
   }
 
@@ -77,7 +78,7 @@ export default class Kettle extends Component {
         this.setState({ currentKettle: '', error: true })
       } else {
         contentRef.on('value', (snapshot) => {
-          this.setState({ contentText: snapshot.val(), error: false })
+          this.setState({ currentKettle: kettle, contentText: snapshot.val(), error: false })
         })
       }
     })
@@ -100,15 +101,15 @@ export default class Kettle extends Component {
   }
 
   updateKettle (newKettleName) {
-    this.setState({ currentKettle: newKettleName })
     this.getKettle(newKettleName)
+    this.setState({ currentKettle: newKettleName, showModal: false })
   }
 
   render () {
     return (
       <div style={{padding: '0px 20px', userSelect: 'none'}}>
         <div style={{ textAlign: 'center', fontSize: '24px', marginTop: '20px' }}>
-          <Icon type="coffee" /> {' '} kettle {' '}<small>({this.state.currentKettle})</small>
+          <Icon type="coffee" /> kettle | <small>{this.state.currentKettle}</small>
         </div>
         <Button
           style={{
@@ -131,7 +132,7 @@ export default class Kettle extends Component {
               placeholder="Search for Kettle..."
               size="large"
               enterButton
-              onSearch={() => this.getKettle(this.state.currentKettle)}
+              onSearch={() => this.getKettle(this.state.searchedKettle)}
               onChange={this.handleChange}
               style={{borderRadius: '20px !important'}}
               autoFocus
