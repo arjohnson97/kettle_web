@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import * as firebase from 'firebase'
 
 import {
-  Input, Button, Form, Icon
+  Input, Button, Form, Icon, Menu, Dropdown
 } from 'antd'
 
 import CreateKettleModal from './components/CreateKettleModal'
@@ -31,7 +31,8 @@ export default class Kettle extends Component {
       contentText: '',
       showModal: false,
       searchedKettle: '',
-      error: false
+      error: false,
+      allKettles: []
     }
 
     this.handleChange = this.handleChange.bind(this)
@@ -46,6 +47,8 @@ export default class Kettle extends Component {
       const kettle = window.location.pathname.slice(1)
       this.getKettle(kettle)
     }
+    this.getAllKettles()
+    console.log(this.state.allKettles)
   }
 
   showModal () {
@@ -65,6 +68,13 @@ export default class Kettle extends Component {
       event.preventDefault()
       this.getKettle(this.state.searchedKettle)
     }
+  }
+
+  getAllKettles () {
+    const checkRef = firebase.database().ref('kettles')
+    checkRef.on('value', (snapshot) => {
+      this.setState({ allKettles: Object.keys(snapshot.val()) })
+    })
   }
 
   getKettle (kettle) {
@@ -106,6 +116,16 @@ export default class Kettle extends Component {
   }
 
   render () {
+    const menu = (
+      <Menu>
+        {this.state.allKettles.map(kettle => {
+          return (
+            <Menu.Item onClick={() => this.getKettle(kettle)} key={kettle}>{kettle}</Menu.Item>
+          )
+        })}
+      </Menu>
+    )
+
     return (
       <div style={{padding: '0px 20px', userSelect: 'none'}}>
         <div style={{ textAlign: 'center', fontSize: '24px', marginTop: '20px' }}>
@@ -126,6 +146,9 @@ export default class Kettle extends Component {
           onKeyPress={this.onKeyPress}
           style={{ maxWidth: '900px', margin: '0px auto' }}
         >
+          <Dropdown overlay={menu} trigger={['click']}>
+            <div style={{width: '100%', margin: '10px 0', textAlign: 'center'}}>Kettles <Icon type="down" /></div>
+          </Dropdown>
           <FormItem>
             <Search
               type="text"
