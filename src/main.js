@@ -86,9 +86,12 @@ export default class Kettle extends PureComponent {
     })
   }
 
-  deleteImage (url) {
-    url.delete().then(() => {
+  deleteImage (index) {
+    console.log(this.state.images)
+    const ref = storageRef.child(`kettles/${this.state.currentKettle}/${this.state.images[index].name}`)
+    ref.delete().then(() => {
       console.log('deleted')
+      this.getKettle()
     })
   }
 
@@ -155,9 +158,9 @@ export default class Kettle extends PureComponent {
           name: file.name
         })
         console.log(`Uploaded ${index + 1}/${files.length}`)
+        this.getKettle(this.state.currentKettle)
       })
     })
-    this.getKettle(this.state.currentKettle)
   }
 
   render () {
@@ -173,11 +176,11 @@ export default class Kettle extends PureComponent {
 
     const images = (
       <div>
-        {this.state.imageUrls.map(url => {
+        {this.state.imageUrls.map((url, index) => {
           if (!url) {
             return null
           }
-          return <img key={url} src={url} height="auto" width="200" onClick={() => this.deleteImage(url)} />
+          return <img key={url} src={url} height="auto" width="200" onClick={() => this.deleteImage(index)} />
         })}
       </div>
     )
