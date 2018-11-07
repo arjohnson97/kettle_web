@@ -46,10 +46,6 @@ export default class imageDropper extends React.Component {
     }
   }
 
-  componentDidUpdate () {
-    console.log(this.state.files)
-  }
-
   onDrop (files) {
     this.setState({
       files: this.state.files.length > 0 ? this.state.files.concat(files.map(file => ({
@@ -61,7 +57,7 @@ export default class imageDropper extends React.Component {
       }))
     })
 
-    this.props.handleUpload(this.state.files)
+    this.props.handleUpload(this.state.files.concat(files))
   }
 
   componentWillUnmount () {
@@ -99,9 +95,9 @@ export default class imageDropper extends React.Component {
           2. Click here to open file explorer
           </Dropzone>
         </div>
-        <aside style={thumbsContainer}>
+        {/* <aside style={thumbsContainer}>
           {thumbs}
-        </aside>
+        </aside> */}
       </section>
     )
   }

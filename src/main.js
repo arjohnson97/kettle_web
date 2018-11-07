@@ -1,4 +1,4 @@
-import React, { Component } from 'react'
+import React, { PureComponent } from 'react'
 import * as firebase from 'firebase'
 
 import {
@@ -27,7 +27,7 @@ const database = firebase.database()
 const storageRef = storage.ref()
 const kettlesRef = storageRef.child('kettles/')
 
-export default class Kettle extends Component {
+export default class Kettle extends PureComponent {
   constructor (props) {
     super(props)
 
@@ -38,7 +38,9 @@ export default class Kettle extends Component {
       showModal: false,
       searchedKettle: '',
       error: false,
-      allKettles: []
+      allKettles: [],
+      images: [],
+      imageUrls: []
     }
 
     this.handleChange = this.handleChange.bind(this)
@@ -47,6 +49,7 @@ export default class Kettle extends Component {
     this.updateContent = this.updateContent.bind(this)
     this.onKeyPress = this.onKeyPress.bind(this)
     this.handleUpload = this.handleUpload.bind(this)
+    // this.getImages = this.getImages.bind(this)
   }
 
   componentDidMount () {
@@ -79,27 +82,42 @@ export default class Kettle extends Component {
   getAllKettles () {
     const checkRef = database.ref('kettles')
     checkRef.on('value', (snapshot) => {
-      this.setState({ allKettles: Object.keys(snapshot.val()) })
+      this.setState({ allKettles: Object.keys(snapshot.val() || []) })
     })
   }
 
-  updateUrl (kettle) {
-    console.log('updated')
-    window.location.href = kettle
+  deleteImage (url) {
+    url.delete().then(() => {
+      console.log('deleted')
+    })
   }
 
   getKettle (kettle) {
-    const contentRef = firebase
+    const ref = firebase
       .database()
-      .ref(`kettles/${kettle}/content`) // this.state.kettleTitle = kettleId;
+      .ref(`kettles/${kettle}/`) // this.state.kettleTitle = kettleId;
 
     const checkRef = database.ref('kettles/') // Checks if the searched Kettle exists
     checkRef.once('value', (snapshot) => {
       if (!snapshot.hasChild(kettle)) {
         this.setState({ currentKettle: '', error: true })
       } else {
-        contentRef.once('value', (snapshot) => {
-          this.setState({ currentKettle: kettle, contentText: snapshot.val(), error: false })
+        ref.once('value', (snapshot) => {
+          this.setState({ currentKettle: kettle,
+            contentText: snapshot.val().content || '',
+            images: snapshot.val().images ? Object.values(snapshot.val().images) : [],
+            error: false })
+
+          const images = snapshot.val().images
+
+          if (images) {
+            Object.values(images).map(image => {
+              const ref = storageRef.child(`kettles/${kettle}/${image.name}`)
+              ref.getDownloadURL().then(url => {
+                this.setState({ imageUrls: this.state.imageUrls.concat(url) })
+              })
+            })
+          } else {}
         })
       }
     })
@@ -127,13 +145,19 @@ export default class Kettle extends Component {
   }
 
   handleUpload (files) {
-    files.map(({file}) => {
-      const ref = storageRef.child(`kettles/${this.state.currentKettle}/${file.name}`)
+    files.map((file, index) => {
+      const ref = kettlesRef.child(`${this.state.currentKettle}/${file.name}`)
       let blob = new Blob([file], {type: file.type})
+
       ref.put(blob).then(snapshot => {
-        console.log('Uploaded: ' + file)
+        const name = file.name.replace(/\./g, '')
+        database.ref(`kettles/${this.state.currentKettle}/images/${name}`).set({
+          name: file.name
+        })
+        console.log(`Uploaded ${index + 1}/${files.length}`)
       })
     })
+    this.getKettle(this.state.currentKettle)
   }
 
   render () {
@@ -145,6 +169,17 @@ export default class Kettle extends Component {
           )
         })}
       </Menu>
+    )
+
+    const images = (
+      <div>
+        {this.state.imageUrls.map(url => {
+          if (!url) {
+            return null
+          }
+          return <img key={url} src={url} height="auto" width="200" onClick={() => this.deleteImage(url)} />
+        })}
+      </div>
     )
 
     return (
@@ -190,10 +225,12 @@ export default class Kettle extends Component {
               onChange={e => this.updateContent(e)}
             />
           </FormItem>
+
         </form>
         <ImageDropper handleUpload={this.handleUpload} />
-        <div />
 
+        <div />
+        { this.state.imageUrls.length > 0 && images }
         <CreateKettleModal visible={this.state.showModal} cancel={this.hideModal} updateKettle={this.updateKettle} />
       </div>
     )
