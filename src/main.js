@@ -6,6 +6,7 @@ import {
 } from 'antd'
 
 import CreateKettleModal from './components/CreateKettleModal'
+import ImageDropper from './components/ImageDropper'
 
 const Search = Input.Search
 const FormItem = Form.Item
@@ -20,6 +21,11 @@ const config = {
   messagingSenderId: '850017678808'
 }
 firebase.initializeApp(config)
+
+const storage = firebase.storage()
+const database = firebase.database()
+const storageRef = storage.ref()
+const kettlesRef = storageRef.child('kettles/')
 
 export default class Kettle extends Component {
   constructor (props) {
@@ -40,6 +46,7 @@ export default class Kettle extends Component {
     this.hideModal = this.hideModal.bind(this)
     this.updateContent = this.updateContent.bind(this)
     this.onKeyPress = this.onKeyPress.bind(this)
+    this.handleUpload = this.handleUpload.bind(this)
   }
 
   componentDidMount () {
@@ -48,7 +55,6 @@ export default class Kettle extends Component {
       this.getKettle(kettle)
     }
     this.getAllKettles()
-    console.log(this.state.allKettles)
   }
 
   showModal () {
@@ -71,10 +77,15 @@ export default class Kettle extends Component {
   }
 
   getAllKettles () {
-    const checkRef = firebase.database().ref('kettles')
+    const checkRef = database.ref('kettles')
     checkRef.on('value', (snapshot) => {
       this.setState({ allKettles: Object.keys(snapshot.val()) })
     })
+  }
+
+  updateUrl (kettle) {
+    console.log('updated')
+    window.location.href = kettle
   }
 
   getKettle (kettle) {
@@ -82,12 +93,12 @@ export default class Kettle extends Component {
       .database()
       .ref(`kettles/${kettle}/content`) // this.state.kettleTitle = kettleId;
 
-    const checkRef = firebase.database().ref('kettles/') // Checks if the searched Kettle exists
-    checkRef.on('value', (snapshot) => {
+    const checkRef = database.ref('kettles/') // Checks if the searched Kettle exists
+    checkRef.once('value', (snapshot) => {
       if (!snapshot.hasChild(kettle)) {
         this.setState({ currentKettle: '', error: true })
       } else {
-        contentRef.on('value', (snapshot) => {
+        contentRef.once('value', (snapshot) => {
           this.setState({ currentKettle: kettle, contentText: snapshot.val(), error: false })
         })
       }
@@ -95,14 +106,14 @@ export default class Kettle extends Component {
   }
 
   updateContent (e) {
-    firebase.database().ref(`kettles/${this.state.currentKettle}/`).set({
+    database.ref(`kettles/${this.state.currentKettle}/`).set({
       content: e.target.value
     })
     const contentRef = firebase
       .database()
       .ref(`kettles/${this.state.currentKettle}/content`) // this.state.kettleTitle = kettleId;
 
-    const checkRef = firebase.database().ref('kettles/') // Checks if the searched Kettle exists
+    const checkRef = database.ref('kettles/') // Checks if the searched Kettle exists
     checkRef.on('value', (snapshot) => {
       contentRef.on('value', (snapshot) => {
         this.setState({ contentText: snapshot.val() })
@@ -113,6 +124,16 @@ export default class Kettle extends Component {
   updateKettle (newKettleName) {
     this.getKettle(newKettleName)
     this.setState({ currentKettle: newKettleName, showModal: false })
+  }
+
+  handleUpload (files) {
+    files.map(({file}) => {
+      const ref = storageRef.child(`kettles/${this.state.currentKettle}/${file.name}`)
+      let blob = new Blob([file], {type: file.type})
+      ref.put(blob).then(snapshot => {
+        console.log('Uploaded: ' + file)
+      })
+    })
   }
 
   render () {
@@ -170,6 +191,7 @@ export default class Kettle extends Component {
             />
           </FormItem>
         </form>
+        <ImageDropper handleUpload={this.handleUpload} />
         <div />
 
         <CreateKettleModal visible={this.state.showModal} cancel={this.hideModal} updateKettle={this.updateKettle} />
