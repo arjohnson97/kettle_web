@@ -28,24 +28,13 @@ export default class imageDropper extends Component {
   onDrop (files) {
     this.setState({
       files: this.state.files.length > 0 ? this.state.files.concat(files.map(file => ({
-        file,
-        preview: URL.createObjectURL(file)
+        file
       }))) : files.map(file => ({
-        file,
-        preview: URL.createObjectURL(file)
+        file
       }))
     })
 
     this.props.handleUpload(files)
-  }
-
-  componentWillUnmount () {
-    // Make sure to revoke the data uris to avoid memory leaks
-    const {files} = this.state
-    for (let i = files.length; i >= 0; i--) {
-      const file = files[0]
-      URL.revokeObjectURL(file.preview)
-    }
   }
 
   render () {

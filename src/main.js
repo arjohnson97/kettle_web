@@ -8,6 +8,7 @@ import {
 
 import CreateKettleModal from './components/CreateKettleModal'
 import ImageDropper from './components/ImageDropper'
+import Images from './components/Images'
 
 const Search = Input.Search
 const FormItem = Form.Item
@@ -41,6 +42,7 @@ export default class Kettle extends PureComponent {
     this.updateContent = this.updateContent.bind(this)
     this.onKeyPress = this.onKeyPress.bind(this)
     this.handleUpload = this.handleUpload.bind(this)
+    this.deleteImage = this.deleteImage.bind(this)
   }
 
   componentDidMount () {
@@ -169,14 +171,6 @@ export default class Kettle extends PureComponent {
       </Menu>
     )
 
-    const images = (
-      <div>
-        {this.state.images.map((image, index) => {
-          return <img key={image.downloadURL} src={image.downloadURL} alt={image.name} height="auto" width="200" onClick={() => this.deleteImage(index)} />
-        })}
-      </div>
-    )
-
     return (
       <div style={{padding: '0px 20px', userSelect: 'none'}}>
         <div style={{ textAlign: 'center', fontSize: '24px', marginTop: '20px' }}>
@@ -225,7 +219,7 @@ export default class Kettle extends PureComponent {
         <ImageDropper handleUpload={this.handleUpload} />
 
         <div />
-        { this.state.images.length > 0 && images }
+        <Images images={this.state.images} deleteImage={this.deleteImage} />
         <CreateKettleModal visible={this.state.showModal} cancel={this.hideModal} updateKettle={this.updateKettle} />
       </div>
     )
