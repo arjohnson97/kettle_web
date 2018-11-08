@@ -3,7 +3,7 @@ import * as firebase from 'firebase'
 import { config } from './components/config'
 
 import {
-  Input, Button, Form, Icon, Menu, Dropdown
+  Input, Button, Form, Icon, Menu, Dropdown, notification
 } from 'antd'
 
 import CreateKettleModal from './components/CreateKettleModal'
@@ -27,7 +27,7 @@ export default class Kettle extends PureComponent {
     this.state = {
       value: '',
       currentKettle: '',
-      contentText: '',
+      content: '',
       showModal: false,
       searchedKettle: '',
       error: false,
@@ -82,8 +82,9 @@ export default class Kettle extends PureComponent {
     const ref = storageRef.child(`kettles/${this.state.currentKettle}/${name}`)
 
     ref.delete().then(() => {
-      console.log('deleted')
-      database.ref(`kettles/${this.state.currentKettle}/images/${name.replace(/\./g, '')}`).remove()
+      database.ref(`kettles/${this.state.currentKettle}/images/${name.replace(/\./g, '')}`).remove().then(() => {
+        this.notify(false)
+      })
     })
   }
 
@@ -99,7 +100,7 @@ export default class Kettle extends PureComponent {
       } else {
         ref.on('value', (snapshot) => {
           this.setState({ currentKettle: kettle,
-            contentText: snapshot.val().content || '',
+            content: snapshot.val().content || '',
             images: snapshot.val().images ? Object.values(snapshot.val().images) : [],
             error: false })
         })
@@ -118,7 +119,7 @@ export default class Kettle extends PureComponent {
     const checkRef = database.ref('kettles/') // Checks if the searched Kettle exists
     checkRef.on('value', (snapshot) => {
       contentRef.on('value', (snapshot) => {
-        this.setState({ contentText: snapshot.val() })
+        this.setState({ content: snapshot.val() })
       })
     })
   }
@@ -130,7 +131,6 @@ export default class Kettle extends PureComponent {
 
   handleUpload (files) {
     files.map((file, index) => {
-      console.log('what')
       const ref = kettlesRef.child(`${this.state.currentKettle}/${file.name}`)
 
       let blob = new Blob([file], {type: file.type})
@@ -144,11 +144,17 @@ export default class Kettle extends PureComponent {
           timeCreated: snapshot.metadata.timeCreated,
           contentType: snapshot.metadata.contentType
         })
-        console.log(`Uploaded ${index + 1}/${files.length}`)
-        this.getKettle(this.state.currentKettle)
+        this.notify(true)
       })
 
       return file
+    })
+  }
+
+  notify (good) {
+    notification.open({
+      message: `Image ${good ? `Uploaded` : `Deleted`}`,
+      description: good ? 'Yay! 🎉' : 'If it was a mistake, then oops 🤭'
     })
   }
 
@@ -210,7 +216,7 @@ export default class Kettle extends PureComponent {
           {this.state.error && <span style={{color: 'red'}}>Kettle does not exist.</span>}
           <FormItem>
             <Input.TextArea
-              value={this.state.contentText}
+              value={this.state.content}
               onChange={e => this.updateContent(e)}
             />
           </FormItem>
