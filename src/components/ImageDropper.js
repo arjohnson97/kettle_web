@@ -2,43 +2,22 @@ import React, { Component } from 'react'
 // import styled from 'styled-components'
 import Dropzone from 'react-dropzone'
 
-// const Wrapper = styled.div`
-//     text-align: center;
-// `
-
-const thumbsContainer = {
-  display: 'flex',
-  flexDirection: 'row',
-  flexWrap: 'wrap',
-  marginTop: 16,
-  justifyContent: 'center'
+const dropzone = {
+  position: 'relative',
+  border: '1px solid lightgray',
+  width: '100%',
+  maxWidth: '900px',
+  padding: '20px',
+  textAlign: 'center',
+  cursor: 'pointer'
 }
 
-const thumb = {
-  display: 'inline-flex',
-  borderRadius: 2,
-  border: '1px solid #eaeaea',
-  marginBottom: 8,
-  marginRight: 8,
-  width: 100,
-  height: 100,
-  padding: 4,
-  boxSizing: 'border-box'
+const activeDropzone = {
+  border: 'none',
+  boxShadow: 'lightgreen 0px 0px 8px 2px'
 }
 
-const thumbInner = {
-  display: 'flex',
-  minWidth: 0,
-  overflow: 'hidden'
-}
-
-const img = {
-  display: 'block',
-  width: 'auto',
-  height: '100%'
-}
-
-export default class imageDropper extends React.Component {
+export default class imageDropper extends Component {
   constructor () {
     super()
     this.state = {
@@ -57,7 +36,7 @@ export default class imageDropper extends React.Component {
       }))
     })
 
-    this.props.handleUpload(this.state.files.concat(files))
+    this.props.handleUpload(files)
   }
 
   componentWillUnmount () {
@@ -70,34 +49,20 @@ export default class imageDropper extends React.Component {
   }
 
   render () {
-    const {files} = this.state
-
-    const thumbs = files.map(file => (
-      <div style={thumb} key={file.preview}>
-        <div style={thumbInner}>
-          <img
-            src={file.preview}
-            style={img}
-          />
-        </div>
-      </div>
-    ))
-
     return (
       <section>
         <div style={{display: 'flex', justifyContent: 'center'}}>
           <Dropzone
             accept="image/*"
             onDrop={this.onDrop.bind(this)}
+            style={dropzone}
+            activeStyle={activeDropzone}
           >
           Ways to upload: <br />
           1. Drag and drop <br />
           2. Click here to open file explorer
           </Dropzone>
         </div>
-        {/* <aside style={thumbsContainer}>
-          {thumbs}
-        </aside> */}
       </section>
     )
   }

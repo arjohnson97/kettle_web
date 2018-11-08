@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react'
 import * as firebase from 'firebase'
+import { config } from './components/config'
 
 import {
   Input, Button, Form, Icon, Menu, Dropdown
@@ -12,14 +13,6 @@ const Search = Input.Search
 const FormItem = Form.Item
 
 // Initialize Firebase
-const config = {
-  apiKey: 'AIzaSyD71FqS5lCiGdJuE8UrfS4Ic_TgHsgikV4',
-  authDomain: 'kettle-84ea2.firebaseapp.com',
-  databaseURL: 'https://kettle-84ea2.firebaseio.com',
-  projectId: 'kettle-84ea2',
-  storageBucket: 'kettle-84ea2.appspot.com',
-  messagingSenderId: '850017678808'
-}
 firebase.initializeApp(config)
 
 const storage = firebase.storage()
@@ -39,8 +32,7 @@ export default class Kettle extends PureComponent {
       searchedKettle: '',
       error: false,
       allKettles: [],
-      images: [],
-      imageUrls: []
+      images: []
     }
 
     this.handleChange = this.handleChange.bind(this)
@@ -49,7 +41,6 @@ export default class Kettle extends PureComponent {
     this.updateContent = this.updateContent.bind(this)
     this.onKeyPress = this.onKeyPress.bind(this)
     this.handleUpload = this.handleUpload.bind(this)
-    // this.getImages = this.getImages.bind(this)
   }
 
   componentDidMount () {
@@ -87,47 +78,37 @@ export default class Kettle extends PureComponent {
   }
 
   deleteImage (index) {
-    console.log(this.state.images)
-    const ref = storageRef.child(`kettles/${this.state.currentKettle}/${this.state.images[index].name}`)
+    const name = this.state.images[index].name
+    const ref = storageRef.child(`kettles/${this.state.currentKettle}/${name}`)
+
     ref.delete().then(() => {
       console.log('deleted')
-      this.getKettle()
+      database.ref(`kettles/${this.state.currentKettle}/images/${name.replace(/\./g, '')}`).remove()
     })
   }
 
   getKettle (kettle) {
     const ref = firebase
       .database()
-      .ref(`kettles/${kettle}/`) // this.state.kettleTitle = kettleId;
+      .ref(`kettles/${kettle}/`)
 
     const checkRef = database.ref('kettles/') // Checks if the searched Kettle exists
-    checkRef.once('value', (snapshot) => {
+    checkRef.on('value', (snapshot) => {
       if (!snapshot.hasChild(kettle)) {
         this.setState({ currentKettle: '', error: true })
       } else {
-        ref.once('value', (snapshot) => {
+        ref.on('value', (snapshot) => {
           this.setState({ currentKettle: kettle,
             contentText: snapshot.val().content || '',
             images: snapshot.val().images ? Object.values(snapshot.val().images) : [],
             error: false })
-
-          const images = snapshot.val().images
-
-          if (images) {
-            Object.values(images).map(image => {
-              const ref = storageRef.child(`kettles/${kettle}/${image.name}`)
-              ref.getDownloadURL().then(url => {
-                this.setState({ imageUrls: this.state.imageUrls.concat(url) })
-              })
-            })
-          } else {}
         })
       }
     })
   }
 
   updateContent (e) {
-    database.ref(`kettles/${this.state.currentKettle}/`).set({
+    database.ref(`kettles/${this.state.currentKettle}/`).update({
       content: e.target.value
     })
     const contentRef = firebase
@@ -149,17 +130,25 @@ export default class Kettle extends PureComponent {
 
   handleUpload (files) {
     files.map((file, index) => {
+      console.log('what')
       const ref = kettlesRef.child(`${this.state.currentKettle}/${file.name}`)
+
       let blob = new Blob([file], {type: file.type})
 
       ref.put(blob).then(snapshot => {
         const name = file.name.replace(/\./g, '')
         database.ref(`kettles/${this.state.currentKettle}/images/${name}`).set({
-          name: file.name
+          name: snapshot.metadata.name,
+          downloadURL: snapshot.downloadURL,
+          size: snapshot.metadata.size,
+          timeCreated: snapshot.metadata.timeCreated,
+          contentType: snapshot.metadata.contentType
         })
         console.log(`Uploaded ${index + 1}/${files.length}`)
         this.getKettle(this.state.currentKettle)
       })
+
+      return file
     })
   }
 
@@ -176,11 +165,8 @@ export default class Kettle extends PureComponent {
 
     const images = (
       <div>
-        {this.state.imageUrls.map((url, index) => {
-          if (!url) {
-            return null
-          }
-          return <img key={url} src={url} height="auto" width="200" onClick={() => this.deleteImage(index)} />
+        {this.state.images.map((image, index) => {
+          return <img key={image.downloadURL} src={image.downloadURL} alt={image.name} height="auto" width="200" onClick={() => this.deleteImage(index)} />
         })}
       </div>
     )
@@ -233,7 +219,7 @@ export default class Kettle extends PureComponent {
         <ImageDropper handleUpload={this.handleUpload} />
 
         <div />
-        { this.state.imageUrls.length > 0 && images }
+        { this.state.images.length > 0 && images }
         <CreateKettleModal visible={this.state.showModal} cancel={this.hideModal} updateKettle={this.updateKettle} />
       </div>
     )
