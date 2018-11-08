@@ -46,7 +46,7 @@ class Image extends Component {
   }
   render () {
     return (
-      <Container><img onMouseOut={() => this.setState({hover: false})} onMouseEnter={() => this.setState({hover: true})} key={this.props.image.downloadURL} src={this.props.image.downloadURL} alt={this.props.image.name} height="auto" width="300" /> { this.state.hover && <StyledButton onMouseEnter={() => this.setState({ hover: true })} onClick={() => this.props.delete(this.props.index)}>Delete</StyledButton>}</Container>
+      <Container><a target="_blank" href={this.props.image.downloadURL}><img onMouseOut={() => this.setState({hover: false})} onMouseEnter={() => this.setState({hover: true})} key={this.props.image.downloadURL} src={this.props.image.downloadURL} alt={this.props.image.name} height="auto" width="300" /></a> { this.state.hover && <StyledButton onMouseEnter={() => this.setState({ hover: true })} onClick={() => this.props.delete(this.props.index)}>Delete</StyledButton>}</Container>
     )
   }
 }
