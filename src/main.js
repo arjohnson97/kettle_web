@@ -51,6 +51,10 @@ export default class Kettle extends PureComponent {
       this.getKettle(kettle)
     }
     this.getAllKettles()
+
+    window.addEventListener('beforeinstallprompts', (e) => {
+      this.setState({deferredPrompt: e})
+    })
   }
 
   showModal () {
