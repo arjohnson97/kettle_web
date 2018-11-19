@@ -227,9 +227,6 @@ class Kettle extends PureComponent {
         <div />
         <Images images={this.state.images} deleteImage={this.deleteImage} />
         <CreateKettleModal visible={this.state.showModal} cancel={this.hideModal} updateKettle={this.updateKettle} />
-        <div style={{textAlign: 'center'}}>
-          Star on &nbsp;<a href="https://github.com/arjohnson97/kettle">GitHub</a>
-        </div>
       </div>
     )
   }
