@@ -36,7 +36,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
-    "deploy": "yarn build && git add . && git commit && Release"
+    "heroku-postbuild": "react-scripts build"
   },
   "browserslist": [
     ">0.2%",
