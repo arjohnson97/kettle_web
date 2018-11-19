@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react'
 import * as firebase from 'firebase'
 import { config } from './components/config'
+import { withRouter } from 'react-router'
 
 import {
   Input, Button, Form, Icon, Menu, Dropdown, notification
@@ -21,7 +22,7 @@ const database = firebase.database()
 const storageRef = storage.ref()
 const kettlesRef = storageRef.child('kettles/')
 
-export default class Kettle extends PureComponent {
+class Kettle extends PureComponent {
   constructor (props) {
     super(props)
 
@@ -104,6 +105,7 @@ export default class Kettle extends PureComponent {
       if (!snapshot.hasChild(kettle)) {
         this.setState({ currentKettle: '', error: true })
       } else {
+        this.props.history.push(`/${kettle}`)
         ref.on('value', (snapshot) => {
           this.setState({ currentKettle: kettle,
             content: snapshot.val().content || '',
@@ -229,3 +231,5 @@ export default class Kettle extends PureComponent {
     )
   }
 }
+
+export default withRouter(Kettle)
