@@ -1,3 +1,3 @@
-# kettle_web
+# Kettle - An instant-updating, auth free, cloud storage platform.
 
-Live data syncing.
+![](kettle.gif)
